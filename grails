@@ -1,0 +1,24 @@
+#!/bin/bash
+
+BASE=/usr/local/grails
+APP=application.properties
+
+VER=$1
+
+if [ -d "$BASE/grails-$VER" ]; then
+	shift
+else
+	if [ -f $APP ]; then
+		VER=`grep app.grails.version $APP | cut -d= -f2`
+		if [ ! -d "$BASE/grails-$VER" ]; then
+			echo Detected version $VER could not be found
+			exit 1
+		fi
+	else
+		echo No valid version on command line and no $APP file found
+		exit 1
+	fi
+fi
+
+export GRAILS_HOME=$BASE/grails-$VER
+$BASE/grails-$VER/bin/grails $*
