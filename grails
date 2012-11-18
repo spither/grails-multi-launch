@@ -1,24 +1,54 @@
 #!/bin/bash
 
-BASE=/usr/local/grails
+# Requires:
+# * unzip
+# * wget
+# * grails dependencies (ie java)
+
+SYS_BASE=/usr/local/grails
+USER_BASE="${HOME}/.grails-multi"
 APP=application.properties
 
-VER=$1
+VERSION_REGEX='^[0-9]+\.[0-9]+\.[0-9]+(\.[a-zA-Z0-9]+)?$'
 
-if [ -d "$BASE/grails-$VER" ]; then
+if [[ $1 =~ $VERSION_REGEX ]]; then
+	VER=$1
 	shift
 else
 	if [ -f $APP ]; then
 		VER=`grep app.grails.version $APP | cut -d= -f2`
-		if [ ! -d "$BASE/grails-$VER" ]; then
-			echo Detected version $VER could not be found
-			exit 1
-		fi
 	else
 		echo No valid version on command line and no $APP file found
 		exit 1
 	fi
 fi
 
-export GRAILS_HOME=$BASE/grails-$VER
-$BASE/grails-$VER/bin/grails $*
+echo Looking for Grails version $VER
+
+GRAILS_HOME=""
+if [ -d "$SYS_BASE/grails-$VER" ]; then
+	GRAILS_PATH="$SYS_BASE/grails-$VER"
+else
+	if [ ! -d "$USER_BASE/grails-$VER" ]; then
+		echo Downloading Grails version $VER
+		if [ ! -d $USER_BASE ]; then mkdir $USER_BASE; fi
+		wget http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-$VER.zip -O $USER_BASE/grails-$VER.zip
+		( cd $USER_BASE && unzip grails-$VER.zip )
+	fi
+	GRAILS_PATH="$USER_BASE/grails-$VER"
+fi
+
+if [ "$GRAILS_PATH" = "" ]; then
+	echo Requested version $VER is not available
+	exit 1
+else
+	if [ "$JAVA_HOME" = "" ]; then
+		echo -n "Guessing JAVA_HOME as... "
+		JAVA_BIN=$(readlink -f $(which java))
+		export JAVA_HOME=$(dirname $(dirname $(dirname $JAVA_BIN)))
+		echo $JAVA_HOME
+	fi
+	export GRAILS_HOME=$GRAILS_PATH
+	$GRAILS_PATH/bin/grails $*
+fi
+
