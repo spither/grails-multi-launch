@@ -47,6 +47,7 @@ else
 		JAVA_BIN=$(readlink -f $(which java))
 		export JAVA_HOME=$(dirname $(dirname $(dirname $JAVA_BIN)))
 		echo $JAVA_HOME
+		echo # Extra line to avoid Grails over-writing our output
 	fi
 	export GRAILS_HOME=$GRAILS_PATH
 	$GRAILS_PATH/bin/grails $*
