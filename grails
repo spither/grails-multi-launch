@@ -8,6 +8,7 @@
 SYS_BASE=/usr/local/grails
 USER_BASE="${HOME}/.grails-multi"
 APP=application.properties
+APP3=gradle.properties
 
 VERSION_REGEX='^[0-9]+\.[0-9]+\.[0-9]+(\.[a-zA-Z0-9]+)?$'
 
@@ -17,6 +18,8 @@ if [[ $1 =~ $VERSION_REGEX ]]; then
 else
 	if [ -f $APP ]; then
 		VER=`grep app.grails.version $APP | cut -d= -f2`
+	elif [ -f $APP3 ]; then
+		VER=`grep grailsVersion $APP3 | cut -d= -f2`
 	else
 		echo No valid version on command line and no $APP file found
 		exit 1
@@ -25,6 +28,12 @@ fi
 
 echo Looking for Grails version $VER
 
+# The old Spring / AWS download URLs are deprecated and don't exist for newer releases (certainly >= 3)
+#SPRING_DL="http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-${VER}.zip"
+
+# Github download URLs have been created for all old releases back to 1.3.8 so we should be safe to assume this
+GITHUB_DL="https://github.com/grails/grails-core/releases/download/v${VER}/grails-${VER}.zip"
+
 GRAILS_HOME=""
 if [ -d "$SYS_BASE/grails-$VER" ]; then
 	GRAILS_PATH="$SYS_BASE/grails-$VER"
@@ -32,7 +41,7 @@ else
 	if [ ! -d "$USER_BASE/grails-$VER" ]; then
 		echo Downloading Grails version $VER
 		if [ ! -d $USER_BASE ]; then mkdir $USER_BASE; fi
-		wget http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-$VER.zip -O $USER_BASE/grails-$VER.zip
+		wget $GITHUB_DL -O $USER_BASE/grails-$VER.zip
 		( cd $USER_BASE && unzip grails-$VER.zip )
 	fi
 	GRAILS_PATH="$USER_BASE/grails-$VER"
